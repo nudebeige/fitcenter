@@ -106,9 +106,14 @@ def get_conn():
 
 def run_query(sql, params=()):
     conn = get_conn()
-    df = pd.read_sql_query(sql, conn, params=params)
+    if params:
+        cursor = conn.execute(sql, params)
+    else:
+        cursor = conn.execute(sql)
+    cols = [d[0] for d in cursor.description]
+    rows = cursor.fetchall()
     conn.close()
-    return df
+    return pd.DataFrame(rows, columns=cols)
 
 def init_tables():
     conn = get_conn()
