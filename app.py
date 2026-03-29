@@ -164,24 +164,28 @@ def get_all_member_names():
 # 초기화 순서 중요: 테이블 먼저 → CSV 이관 → 비밀번호 로드
 def auto_import_csv():
     try:
+        # 1. 테이블 먼저 생성
+        init_tables()
+
+        # 2. members 테이블이 비어있는지 확인
         conn = get_conn()
-        init_tables()  # ← 함수 안으로 이동
-        cursor = conn.execute("SELECT COUNT(*) FROM members")
-        count = cursor.fetchone()[0]
+        count = conn.execute(
+            "SELECT COUNT(*) FROM members"
+        ).fetchone()[0]
         conn.close()
 
+        # 3. 비어있으면 CSV에서 데이터 읽어서 넣기
         if count == 0:
-            db1_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "db1.csv"
-            )
-            db2_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "db2.csv"
-            )
+            base = os.path.dirname(os.path.abspath(__file__))
+            db1_path = os.path.join(base, "db1.csv")
+            db2_path = os.path.join(base, "db2.csv")
+
             if os.path.exists(db1_path) and os.path.exists(db2_path):
                 db1 = pd.read_csv(db1_path)
                 db2 = pd.read_csv(db2_path)
                 db1.columns = [c.lower() for c in db1.columns]
                 db2.columns = [c.lower() for c in db2.columns]
+
                 conn = get_conn()
                 db1.to_sql("members", conn,
                            if_exists="replace", index=False)
