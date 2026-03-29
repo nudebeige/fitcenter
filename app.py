@@ -163,6 +163,35 @@ def get_all_member_names():
 
 # 초기화
 init_tables()
+def auto_import_csv():
+    try:
+        conn = get_conn()
+        cursor = conn.execute("SELECT COUNT(*) FROM members")
+        count = cursor.fetchone()[0]
+        conn.close()
+
+        if count == 0:
+            db1_path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "db1.csv"
+            )
+            db2_path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "db2.csv"
+            )
+            if os.path.exists(db1_path) and os.path.exists(db2_path):
+                db1 = pd.read_csv(db1_path)
+                db2 = pd.read_csv(db2_path)
+                db1.columns = [c.lower() for c in db1.columns]
+                db2.columns = [c.lower() for c in db2.columns]
+                conn = get_conn()
+                db1.to_sql("members", conn,
+                           if_exists="replace", index=False)
+                db2.to_sql("class_reservations", conn,
+                           if_exists="replace", index=False)
+                conn.close()
+    except Exception as e:
+        st.error(f"DB 초기화 오류: {e}")
+
+auto_import_csv()
 load_passwords()
 
 if not check_login():
