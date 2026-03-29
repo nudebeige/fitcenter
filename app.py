@@ -168,19 +168,26 @@ def get_all_member_names():
 
 # 초기화 순서 중요: 테이블 먼저 → CSV 이관 → 비밀번호 로드
 def auto_import_csv():
-    try:
-        # 1. 테이블 먼저 생성
-        init_tables()
+    # 1단계: 테이블 생성 (반드시 먼저)
+    init_tables()
 
-        # 2. members 테이블이 비어있는지 확인
+    # 2단계: 테이블 생성 후 잠시 대기
+    import time
+    time.sleep(1)
+
+    # 3단계: members 테이블 row 수 확인
+    try:
         conn = get_conn()
         count = conn.execute(
             "SELECT COUNT(*) FROM members"
         ).fetchone()[0]
         conn.close()
+    except Exception:
+        count = 0  # 테이블 없으면 0으로 처리
 
-        # 3. 비어있으면 CSV에서 데이터 읽어서 넣기
-        if count == 0:
+    # 4단계: 비어있으면 CSV 이관
+    if count == 0:
+        try:
             base = os.path.dirname(os.path.abspath(__file__))
             db1_path = os.path.join(base, "db1.csv")
             db2_path = os.path.join(base, "db2.csv")
@@ -197,8 +204,8 @@ def auto_import_csv():
                 db2.to_sql("class_reservations", conn,
                            if_exists="replace", index=False)
                 conn.close()
-    except Exception as e:
-        st.error(f"DB 초기화 오류: {e}")
+        except Exception as e:
+            st.error(f"CSV 이관 오류: {e}")
 
 auto_import_csv()
 load_passwords()
