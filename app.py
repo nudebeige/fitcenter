@@ -161,8 +161,7 @@ def get_all_member_names():
     all_names = sorted(set(existing + new_ones))
     return all_names
 
-# 초기화
-init_tables()
+# 초기화 순서 중요: 테이블 먼저 → CSV 이관 → 비밀번호 로드
 def auto_import_csv():
     try:
         conn = get_conn()
