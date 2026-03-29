@@ -166,6 +166,7 @@ init_tables()
 def auto_import_csv():
     try:
         conn = get_conn()
+        init_tables()  # ← 함수 안으로 이동
         cursor = conn.execute("SELECT COUNT(*) FROM members")
         count = cursor.fetchone()[0]
         conn.close()
